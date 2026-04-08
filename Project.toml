@@ -1,0 +1,13 @@
+name = "DomainArrays"
+uuid = "79634e2c-29b7-4c75-a81d-7876a394628a" # Note: Generated a new unique UUID
+authors = ["Manuel Jenkin Jerome <mj2984@columbia.edu>"]
+version = "0.1.0"
+description = "Domain-indexed arrays and views for signal processing."
+license = "MIT"
+
+[deps]
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[compat]
+julia = "1.8"
+Printf = "1"

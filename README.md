@@ -54,3 +54,13 @@ When you need to ignore the domain and hit the raw indices:
     val = da[1:10, 1] 
 end
 ```
+
+### 5. Constant-Value Initialization
+Use domainfill (or the alias domainfull) to create arrays pre-populated with a specific value across a coordinate range.
+```
+# Create a 5.0 unit long array at 100Hz filled with the value -1.0
+da = domainfill(-1.0, (5.0, 100))
+
+# Or use the alias for "full" arrays
+da_full = domainfull(Float32, 42.0, (2.0, 1000))
+```

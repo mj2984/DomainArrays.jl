@@ -74,8 +74,7 @@ Base.unsafe_convert(::Type{Ptr{T}}, D::AbstractDomainArray{T}) where {T} =
     Base.unsafe_convert(Ptr{T}, D.data)
 
 # Forward IndexStyle to underlying storage
-Base.IndexStyle(::Type{<:AbstractDomainArray{T,N,A}}) where {T,N,A} =
-    Base.IndexStyle(A)
+Base.IndexStyle(D::AbstractDomainArray) = IndexStyle(D.data)
 
 # Forward strides/stride to underlying storage
 Base.strides(D::AbstractDomainArray) = strides(D.data)

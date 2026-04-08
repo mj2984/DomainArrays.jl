@@ -646,4 +646,79 @@ function rewrite_rhs_for_interp(rhs, var, coords_sym, method)
     rhs
 end
 
+########################
+# High-level domainmap #
+########################
+
+"""
+    @domainmap Method A .+= B
+    @domainmap Method A .= A .+ B
+
+Domain-aware broadcast with interpolation.
+
+Supported assignment forms:
+- A .+= B
+- A .-= B
+- A .*= B
+- A ./= B
+- A .^= B
+- A .= A .+ B
+- A .= A .* B
+- A .= A .- B
+- A .= A ./ B
+- A .= A .^ B
+
+Rules:
+- Target domain = A's domain (rate + offset)
+- B is interpolated onto A's domain using `Method`
+- Default strict rate-matching remains unchanged elsewhere
+"""
+macro domainmap(method, ex)
+    _expand_domainmap(method, ex) |> esc
+end
+
+function _expand_domainmap(method, ex::Expr)
+    # Case 1: A .<op>= B
+    if ex.head === :.+= || ex.head === :.-= || ex.head === :.*= ||
+       ex.head === :./= || ex.head === :.^=
+        A = ex.args[1]
+        B = ex.args[2]
+        op = Symbol(String(ex.head)[2:end-1])  # extract +, -, *, /, ^
+        return _expand_domainmap_assign!(method, A, B, op)
+    end
+
+    # Case 2: A .= A .<op> B
+    if ex.head === :.= && ex.args[2] isa Expr
+        rhs = ex.args[2]
+        if rhs.head in (:.+, :.-, :.*, :./, :.^) &&
+           rhs.args[1] == ex.args[1]
+            A = ex.args[1]
+            B = rhs.args[2]
+            op = Symbol(String(rhs.head)[2:end])  # extract +, -, *, /, ^
+            return _expand_domainmap_assign!(method, A, B, op)
+        end
+    end
+
+    error("@domainmap currently supports assignment forms like A .+= B or A .= A .+ B")
+end
+
+# Core expansion for A .<op>= B
+function _expand_domainmap_assign!(method, A, B, op)
+    quote
+        local _A = $(esc(A))
+        local _B = $(esc(B))
+        local _m = $(esc(method))()
+
+        # Iterate over A's domain
+        local _ax = invertaxis(_A)
+
+        for (_coords, _I) in _ax
+            local _a_val = _A.data[_I]
+            local _b_val = _B[interp(_m, _coords)]
+            _A.data[_I] = Base.$op(_a_val, _b_val)
+        end
+
+        _A
+    end
+end
 end # module
